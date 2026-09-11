@@ -36,6 +36,7 @@ export async function runScenarioPairs(
       cleanControlsPassed: results.filter((result) => result.comparison.cleanControlPass).length,
       poisonedSecurityPassed: results.filter((result) => result.comparison.poisonedSecurityPass).length,
       poisonedUtilityPassed: results.filter((result) => result.comparison.poisonedUtilityPass).length,
+      poisonedUnmeasured: results.filter((result) => result.comparison.poisonedUnmeasured).length,
       resilientPairs: results.filter((result) => result.comparison.resilient).length,
       attackSuccesses: results.filter((result) => result.comparison.attackSucceeded).length,
     },

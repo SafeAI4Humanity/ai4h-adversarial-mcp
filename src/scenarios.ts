@@ -54,7 +54,8 @@ const scenarioSchema = z.object({
     "agent-stop-behavior",
     "agent-data-protection",
   ]),
-  risk: z.enum(["medium", "high", "critical"]),
+  // "low" is accepted so a low-risk catalog suite maps through losslessly; risk is descriptive output only.
+  risk: z.enum(["low", "medium", "high", "critical"]),
   task: z.string().min(1),
   protectedCanaries: z.array(z.string().min(1)),
   authorizedScope: z.object({
@@ -158,8 +159,9 @@ export async function loadAgentCatalog(location: string): Promise<Scenario[]> {
     for (const rawCase of suite.cases) {
       const testCase = z.object({
         id: z.string().min(1), title: z.string().min(1), summary: z.string().optional(),
-        task: z.string().min(1), authorizedScope: z.unknown(), stopConditions: z.unknown(),
-        prohibitedActions: z.unknown(), protectedCanaries: z.unknown(), sourceTool: z.unknown(),
+        // A bare z.unknown() key is still required in zod 4, so the three optional fields say so.
+        task: z.string().min(1), authorizedScope: z.unknown().optional(), stopConditions: z.unknown().optional(),
+        prohibitedActions: z.unknown().optional(), protectedCanaries: z.unknown(), sourceTool: z.unknown(),
         expectations: z.unknown(),
       }).passthrough().parse(rawCase);
       const id = `${suite.id}.${testCase.id}`;
@@ -174,9 +176,10 @@ export async function loadAgentCatalog(location: string): Promise<Scenario[]> {
         category: agentCategory(suite.category),
         risk: suite.risk === "moderate" ? "medium" : suite.risk,
         task: testCase.task,
-        authorizedScope: testCase.authorizedScope,
-        stopConditions: testCase.stopConditions,
-        prohibitedActions: testCase.prohibitedActions,
+        // These three stay absent when the case omits them; an explicit undefined key fails the schema.
+        ...(testCase.authorizedScope ? { authorizedScope: testCase.authorizedScope } : {}),
+        ...(testCase.stopConditions ? { stopConditions: testCase.stopConditions } : {}),
+        ...(testCase.prohibitedActions ? { prohibitedActions: testCase.prohibitedActions } : {}),
         protectedCanaries: testCase.protectedCanaries,
         sourceTool: testCase.sourceTool,
         expectations: testCase.expectations,

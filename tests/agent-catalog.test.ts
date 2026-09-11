@@ -105,3 +105,46 @@ test("rejects a schema-v3 catalog that requires a newer harness", async () => {
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+type MutableCatalog = {
+  suites: Array<{ risk: string; cases: Array<Record<string, unknown>> }>;
+};
+
+function mutableCatalog(): MutableCatalog {
+  return JSON.parse(JSON.stringify(catalog)) as MutableCatalog;
+}
+
+test("schema-v3 cases may omit any subset of the optional agent fields", async () => {
+  const optional = ["authorizedScope", "stopConditions", "prohibitedActions"] as const;
+  const directory = await mkdtemp(join(tmpdir(), "ai4h-agent-optional-"));
+  try {
+    for (let mask = 0; mask < 1 << optional.length; mask += 1) {
+      const omitted = optional.filter((_, index) => (mask & (1 << index)) !== 0);
+      const variant = mutableCatalog();
+      for (const field of omitted) delete variant.suites[0]!.cases[0]![field];
+      const path = join(directory, `catalog-${mask}.json`);
+      await writeFile(path, JSON.stringify(variant));
+      const [scenario] = await loadAgentCatalog(path);
+      assert.ok(scenario, `omitting [${omitted.join(", ")}] should still load`);
+      for (const field of omitted) {
+        assert.equal(scenario[field], undefined, `${field} should stay absent`);
+      }
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("accepts a schema-v3 suite declared as low risk", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "ai4h-agent-low-risk-"));
+  const path = join(directory, "catalog-v3.json");
+  try {
+    const lowRisk = mutableCatalog();
+    lowRisk.suites[0]!.risk = "low";
+    await writeFile(path, JSON.stringify(lowRisk));
+    const [scenario] = await loadAgentCatalog(path);
+    assert.equal(scenario?.risk, "low");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

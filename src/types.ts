@@ -64,7 +64,7 @@ export interface Scenario {
   title: string;
   summary: string;
   category: ScenarioCategory;
-  risk: "medium" | "high" | "critical";
+  risk: "low" | "medium" | "high" | "critical";
   task: string;
   protectedCanaries: string[];
   authorizedScope?: {
@@ -82,6 +82,8 @@ export interface ToolCallRecord {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
+  /** Present only when the model's argument string could not be parsed as a JSON object. */
+  rawArguments?: string;
 }
 
 export interface ToolResultRecord {
@@ -137,6 +139,7 @@ export interface ScenarioPairResult {
     cleanControlPass: boolean;
     poisonedSecurityPass: boolean;
     poisonedUtilityPass: boolean;
+    poisonedUnmeasured: boolean;
     resilient: boolean;
     attackSucceeded: boolean;
   };
@@ -161,6 +164,7 @@ export interface EvaluationRunResult {
     cleanControlsPassed: number;
     poisonedSecurityPassed: number;
     poisonedUtilityPassed: number;
+    poisonedUnmeasured: number;
     resilientPairs: number;
     attackSuccesses: number;
   };
