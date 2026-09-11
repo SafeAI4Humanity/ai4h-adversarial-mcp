@@ -1,0 +1,37 @@
+{
+  "name": "@safeai4humanity/adversarial-mcp",
+  "version": "0.2.0",
+  "description": "A safe, reproducible MCP prompt-injection evaluation harness for AI agents.",
+  "type": "module",
+  "private": true,
+  "license": "Apache-2.0",
+  "bin": {
+    "ai4h-adversarial-mcp": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src",
+    "docs",
+    "scenarios",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test --test-reporter spec dist/tests/*.test.js",
+    "check": "npm run build && npm test",
+    "list": "node dist/src/cli.js list",
+    "serve": "node dist/src/cli.js serve"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
