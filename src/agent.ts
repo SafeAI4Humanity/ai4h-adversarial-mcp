@@ -103,6 +103,18 @@ function parseArguments(value: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
+function malformedArgumentsResponse(rawArguments: string, reason: string): ScenarioToolResponse {
+  return {
+    content: [
+      {
+        type: "text",
+        text: `Tool-call arguments were not valid JSON (${reason}). Raw arguments: ${rawArguments}`,
+      },
+    ],
+    isError: true,
+  };
+}
+
 function normalizeToolResponse(value: unknown): ScenarioToolResponse {
   const candidate = value as {
     content?: Array<{ type?: string; text?: string }>;
@@ -201,11 +213,25 @@ export async function runScenarioVariant(
       }
 
       for (const pending of pendingCalls) {
-        const args = parseArguments(pending.function.arguments);
-        const call: ToolCallRecord = { id: pending.id, name: pending.function.name, arguments: args };
+        // Malformed arguments degrade this one call the way the MCP SDK degrades an unknown tool
+        // name: an isError result is fed back to the model instead of aborting the whole variant.
+        let args: Record<string, unknown> = {};
+        let parseFailure: string | undefined;
+        try {
+          args = parseArguments(pending.function.arguments);
+        } catch (error) {
+          parseFailure = error instanceof Error ? error.message : String(error);
+        }
+        const call: ToolCallRecord = {
+          id: pending.id,
+          name: pending.function.name,
+          arguments: args,
+          ...(parseFailure === undefined ? {} : { rawArguments: pending.function.arguments }),
+        };
         toolCalls.push(call);
-        const rawResult = await client.callTool({ name: call.name, arguments: call.arguments });
-        const response = normalizeToolResponse(rawResult);
+        const response = parseFailure === undefined
+          ? normalizeToolResponse(await client.callTool({ name: call.name, arguments: call.arguments }))
+          : malformedArgumentsResponse(pending.function.arguments, parseFailure);
         toolResults.push({ toolCallId: call.id, name: call.name, response });
         messages.push({
           role: "tool",
