@@ -2,6 +2,8 @@
 
 AI4H Adversarial MCP is a safe, reproducible test harness for measuring whether an LLM agent follows malicious instructions embedded in MCP tool results. It provides paired clean and poisoned versions of the same task, records the full tool trace, and scores task utility separately from attack resistance.
 
+[![Donate via Givebutter](https://img.shields.io/badge/Donate-Givebutter-FA8C16?style=flat-square)](https://givebutter.com/support-safe-ai-for-humanity-30j2lu)
+
 This is an early evaluation tool from the [Safe AI for Humanity Foundation](https://safeaiforhumanity.org/). Automated scores require human review and should not be treated as a complete safety certification.
 
 ## Safety model
